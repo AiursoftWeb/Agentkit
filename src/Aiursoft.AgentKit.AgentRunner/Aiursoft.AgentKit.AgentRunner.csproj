@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Aiursoft.AgentKit.AgentRunner</RootNamespace>
+    <AssemblyName>Aiursoft.AgentKit.AgentRunner</AssemblyName>
+    <PackageId>Aiursoft.AgentKit.AgentRunner</PackageId>
+    <Description>Provider-neutral AgentKit runtime entry points and ordered approval execution.</Description>
+    <PackageTags>agents;runner;tools;orchestration</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression />
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aiursoft.AgentKit\Aiursoft.AgentKit.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

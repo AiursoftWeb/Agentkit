@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Aiursoft.AgentKit.Mcp</RootNamespace>
+    <AssemblyName>Aiursoft.AgentKit.Mcp</AssemblyName>
+    <PackageId>Aiursoft.AgentKit.Mcp</PackageId>
+    <Description>Official MCP SDK adapters for Aiursoft.AgentKit.</Description>
+    <PackageTags>agents;mcp;tools;orchestration</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression />
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aiursoft.AgentKit\Aiursoft.AgentKit.csproj" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>

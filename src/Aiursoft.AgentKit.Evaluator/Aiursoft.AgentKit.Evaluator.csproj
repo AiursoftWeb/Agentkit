@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Aiursoft.AgentKit.Evaluator</RootNamespace>
+    <AssemblyName>Aiursoft.AgentKit.Evaluator</AssemblyName>
+    <PackageId>Aiursoft.AgentKit.Evaluator</PackageId>
+    <Description>Deterministic assertion, evidence, JSON matching, and scoring primitives for agent evaluation.</Description>
+    <PackageTags>agents;evaluation;testing;scoring</PackageTags>
+    <IsPackable>true</IsPackable>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageLicenseExpression />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+</Project>
