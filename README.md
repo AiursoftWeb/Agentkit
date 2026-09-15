@@ -19,3 +19,21 @@ dotnet test tests/Aiursoft.AgentKit.Tests/Aiursoft.AgentKit.Tests.csproj --filte
 dotnet test tests/Aiursoft.AgentKit.Mcp.Tests/Aiursoft.AgentKit.Mcp.Tests.csproj --filter FullyQualifiedName~McpToolCatalogTests
 dotnet test tests/Aiursoft.AgentKit.Evaluator.Tests/Aiursoft.AgentKit.Evaluator.Tests.csproj --filter FullyQualifiedName~EvaluatorTests
 ```
+
+Run the focused test project that covers your change; the GitLab pipeline runs the complete solution suite with JUnit and Cobertura reporting.
+
+## Validation and release pipeline
+
+The repository follows the Aiursoft template pipeline: `build`, `validate`, `publish`, and `deploy`.
+
+- `lint.sh` runs formatting validation, the shared security baseline, and ReSharper inspection.
+- CI tests all projects in `Aiursoft.AgentKit.sln`, aggregates Cobertura coverage, and retains JUnit and coverage artifacts for one day.
+- CI builds and packs all four NuGet libraries, retaining `.nupkg` artifacts for one week.
+- On `master`, CI publishes packages to the internal Aiursoft feed and NuGet.org. The protected, masked GitLab variables `LOCAL_NUGET_API_KEY` and `NUGET_API_KEY` must be configured before a master release pipeline runs.
+
+For a release-package smoke check, use:
+
+```bash
+dotnet build Aiursoft.AgentKit.sln --configuration Release -p:GeneratePackageOnBuild=false
+dotnet pack Aiursoft.AgentKit.sln --configuration Release --no-build
+```
