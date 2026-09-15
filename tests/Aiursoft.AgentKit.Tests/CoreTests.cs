@@ -184,6 +184,29 @@ public sealed class CoreTests
         Assert.AreEqual(1, resumed.Transcript.Count(message => message.Role == TranscriptRole.Tool));
         CollectionAssert.AreEqual(new[] { "read-1", "write-1" }, resumed.Transcript.Single(message => message.Role == TranscriptRole.Tool).ToolResults.Select(result => result.CallId).ToArray());
         CollectionAssert.AreEqual(new[] { "read-1", "write-1" }, resumed.Results.Select(result => result.CallId).ToArray());
+        CollectionAssert.AreEqual(new[] { "read-1", "write-1" }, resumed.Traces.Select(trace => trace.CallId).ToArray());
+    }
+
+    [TestMethod]
+    public async Task OrderedRunnerKeepsMultiplePendingResolutionsInCallOrder()
+    {
+        var write = new Tool("write", approval: true);
+        var runner = new OrderedAgentRunner(new Model(
+            Calls(Call("write-1", "write"), Call("write-2", "write")),
+            new AgentModelResponse([new TextBlock("done")])));
+        var paused = await runner.RunAsync(new AgentRunRequest([], [write]));
+
+        var afterSecond = await runner.ResolveAsync(paused.Checkpoint!, [write], "write-2", ApprovalDecision.Reject);
+        Assert.AreEqual(OrderedAgentRunOutcome.AwaitingApproval, afterSecond.Outcome);
+        Assert.AreEqual(ToolOutcome.Rejected, afterSecond.Checkpoint!.Resolutions.Single(item => item.Call.Id == "write-2").Result!.Outcome);
+
+        var resumed = await runner.ResolveAsync(afterSecond.Checkpoint, [write], "write-1", ApprovalDecision.Execute);
+
+        Assert.AreEqual(OrderedAgentRunOutcome.Completed, resumed.Outcome);
+        CollectionAssert.AreEqual(new[] { "write-1", "write-2" }, resumed.Results.Select(result => result.CallId).ToArray());
+        CollectionAssert.AreEqual(new[] { "write-1", "write-2" }, resumed.Transcript.Single(message => message.Role == TranscriptRole.Tool).ToolResults.Select(result => result.CallId).ToArray());
+        Assert.AreEqual(1, write.Calls);
+        Assert.AreEqual(1, resumed.Traces.Count);
     }
 
     [TestMethod]

@@ -51,13 +51,14 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
 
         var registry = new AgentToolRunner(tools);
         ToolResult result;
+        ToolTrace? trace = null;
         if (decision == ApprovalDecision.Reject)
         {
             result = new ToolResult(pending.Call.Id, pending.Call.Name, ToolOutcome.Rejected, Error: "Tool call rejected.");
         }
         else
         {
-            var (results, _) = await registry.RunAsync(
+            var (results, traces) = await registry.RunAsync(
                 [pending.Call],
                 new Dictionary<string, ApprovalDecision>(StringComparer.Ordinal) { [pending.Call.Id] = ApprovalDecision.Execute },
                 1,
@@ -65,30 +66,46 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
                 checkpoint.Iterations,
                 cancellationToken);
             result = results[0];
+            trace = traces[0];
         }
 
         var resolutions = checkpoint.Resolutions
             .Select(item => item.Call.Id == callId ? item with { Result = result.DeepCopy() } : item.DeepCopy())
             .ToArray();
-        var updated = checkpoint with { Resolutions = resolutions };
+        var resolutionIds = checkpoint.Resolutions.Select(item => item.Call.Id).ToHashSet(StringComparer.Ordinal);
+        var completedResults = checkpoint.CompletedResults
+            .Where(item => !resolutionIds.Contains(item.CallId))
+            .Concat(resolutions.Where(item => item.Result is not null).Select(item => item.Result!))
+            .Select(item => item.DeepCopy())
+            .ToArray();
+        var tracesByCall = checkpoint.CompletedTraces.ToDictionary(item => item.CallId, StringComparer.Ordinal);
+        if (trace is not null) tracesByCall[trace.CallId] = trace;
+        var completedTraces = checkpoint.CompletedTraces
+            .Where(item => !resolutionIds.Contains(item.CallId))
+            .Concat(resolutions.Select(item => item.Call.Id)
+                .Where(tracesByCall.ContainsKey)
+                .Select(call => tracesByCall[call]))
+            .ToArray();
+        var updated = checkpoint with
+        {
+            Resolutions = resolutions,
+            CompletedResults = completedResults,
+            CompletedTraces = completedTraces
+        };
         if (resolutions.Any(item => item.Result is null))
             return OrderedAgentRunResult.AwaitingApproval(updated);
 
         var transcript = checkpoint.Transcript.Select(message => message.DeepCopy()).ToList();
         transcript.Add(TranscriptMessage.Tool(resolutions.Select(item => item.Result!)));
         TranscriptValidator.Validate(transcript);
-        var completedResults = checkpoint.CompletedResults
-            .Append(result)
-            .Select(item => item.DeepCopy())
-            .ToArray();
         return await ContinueAsync(
             transcript,
             tools.ToArray(),
             checkpoint.MaxIterations,
             checkpoint.Iterations,
             null,
-            completedResults,
-            checkpoint.CompletedTraces,
+            updated.CompletedResults,
+            updated.CompletedTraces,
             cancellationToken);
     }
 

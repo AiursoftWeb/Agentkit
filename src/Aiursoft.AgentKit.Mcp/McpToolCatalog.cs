@@ -16,17 +16,20 @@ public sealed class McpToolCatalog
 {
     private readonly IServiceProvider services;
     private readonly Func<MethodInfo, bool> requiresApproval;
+    private readonly Func<MethodInfo, IEnumerable<object>> metadataFactory;
     private readonly IReadOnlyList<McpToolRegistration> registrations;
 
     public McpToolCatalog(
         IServiceProvider services,
         IEnumerable<Assembly> assemblies,
         IReadOnlySet<string>? enabledToolNames = null,
-        Func<MethodInfo, bool>? requiresApproval = null)
+        Func<MethodInfo, bool>? requiresApproval = null,
+        Func<MethodInfo, IEnumerable<object>>? metadataFactory = null)
     {
         this.services = services ?? throw new ArgumentNullException(nameof(services));
         ArgumentNullException.ThrowIfNull(assemblies);
         this.requiresApproval = requiresApproval ?? (_ => false);
+        this.metadataFactory = metadataFactory ?? (_ => []);
 
         var discovered = Discover(assemblies);
         ValidateEnabledToolNames(discovered, enabledToolNames);
@@ -65,7 +68,7 @@ public sealed class McpToolCatalog
 
     private McpToolRegistration CreateRegistration(DiscoveredTool discovered)
     {
-        var metadata = new List<object>();
+        var metadata = metadataFactory(discovered.Method).ToList();
         if (this.requiresApproval(discovered.Method))
             metadata.Add(new ApprovalRequiredMetadata());
         var tool = McpServerTool.Create(
