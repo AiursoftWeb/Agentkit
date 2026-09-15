@@ -13,6 +13,7 @@ public sealed class AssertionEvaluator : IEvaluationAssertionEvaluator
     {
         ArgumentNullException.ThrowIfNull(evaluationCase);
         ArgumentNullException.ThrowIfNull(evidence);
+        EvaluationDefinitionValidator.Validate(evaluationCase);
         var expectedIndexes = evaluationCase.Steps.Select(step => step.Index).ToHashSet();
         var evidenceIndexes = evidence.Steps.Select(step => step.StepIndex).ToArray();
         var indexesValid = evidenceIndexes.Length == expectedIndexes.Count &&
@@ -25,10 +26,13 @@ public sealed class AssertionEvaluator : IEvaluationAssertionEvaluator
                    string.Equals(expected.ContextId, step.ContextId, StringComparison.Ordinal);
         });
 
+        var evidenceByIndex = indexesValid
+            ? evidence.Steps.ToDictionary(step => step.StepIndex)
+            : new Dictionary<int, EvaluationStepEvidence>();
         var results = new List<EvaluationAssertionResult>();
         foreach (var step in evaluationCase.Steps.OrderBy(item => item.Index))
         {
-            var stepEvidence = evidence.Steps.SingleOrDefault(item => item.StepIndex == step.Index);
+            evidenceByIndex.TryGetValue(step.Index, out var stepEvidence);
             foreach (var assertion in step.Expectation.Assertions)
             {
                 if (!EvaluationAssertionKinds.All.Contains(assertion.Kind))

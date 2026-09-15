@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aiursoft.AgentKit.Messages;
 
 namespace Aiursoft.AgentKit.Evaluator;
 
@@ -51,7 +52,9 @@ public sealed record EvaluationToolTrace(
     JsonElement Parameters,
     JsonElement Result,
     int Iteration,
-    TimeSpan Elapsed);
+    TimeSpan Elapsed,
+    string? CallId = null,
+    ToolOutcome? Outcome = null);
 
 public sealed record EvaluationStepEvidence(
     int StepIndex,

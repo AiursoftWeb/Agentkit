@@ -1,5 +1,8 @@
 using System.Text.Json;
+using Aiursoft.AgentKit;
+using Aiursoft.AgentKit.AgentRunner;
 using Aiursoft.AgentKit.Evaluator;
+using Aiursoft.AgentKit.Messages;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Aiursoft.AgentKit.Evaluator.Tests;
@@ -7,6 +10,29 @@ namespace Aiursoft.AgentKit.Evaluator.Tests;
 [TestClass]
 public sealed class EvaluatorTests
 {
+    [TestMethod]
+    public async Task AgentRunEvidencePreservesToolCorrelation()
+    {
+        var call = new ToolCall("search-1", "search", JsonSerializer.SerializeToElement(new { query = "docs" }));
+        var model = new ScriptedModel(
+            new AgentModelResponse([new ToolCallBlock(call)], AgentFinishReason.ToolCalls),
+            new AgentModelResponse([new TextBlock("Answer")], AgentFinishReason.Stop));
+        var run = await new BoundedAgentRunner(model).RunAsync(new AgentRunRequest([], [new EchoTool("search")]));
+        using var state = JsonDocument.Parse("{\"documents\":[\"docs\"]}");
+
+        var evidence = AgentRunEvidenceAdapter.ToStepEvidence(
+            new EvaluationStepIdentity(0, "subject", "context"),
+            run,
+            state.RootElement,
+            TimeSpan.FromMilliseconds(10));
+
+        Assert.IsTrue(evidence.Valid);
+        Assert.AreEqual("docs", evidence.Tools.Single().Parameters.GetProperty("query").GetString());
+        Assert.AreEqual("search-1", evidence.Tools.Single().CallId);
+        Assert.AreEqual(ToolOutcome.Succeeded, evidence.Tools.Single().Outcome);
+        Assert.AreEqual("Answer", evidence.Response);
+    }
+
     [TestMethod]
     public void JsonMatcherSupportsSubsetAndUnorderedOperators()
     {
@@ -47,6 +73,20 @@ public sealed class EvaluatorTests
 
         Assert.IsTrue(result.Passed);
         Assert.AreEqual(100d, result.Score);
+    }
+
+    private sealed class EchoTool(string name) : IAgentTool
+    {
+        public ToolDefinition Definition { get; } = new(name, name);
+        public ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(arguments.Clone());
+    }
+
+    private sealed class ScriptedModel(params AgentModelResponse[] responses) : IAgentModelClient
+    {
+        private readonly Queue<AgentModelResponse> responses = new(responses);
+        public ValueTask<AgentModelResponse> CompleteAsync(AgentModelRequest request, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(responses.Dequeue());
     }
 
     [TestMethod]
