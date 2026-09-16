@@ -30,7 +30,7 @@ internal sealed class AgentToolRunner
         using var gate = new SemaphoreSlim(maxConcurrency);
         var results = new ToolResult[calls.Count];
         var traces = new ToolTrace[calls.Count];
-        var tasks = calls.Select((call, index) => RunOneAsync(call, index, decisions, gate, results, traces, publish, iteration, cancellationToken));
+        var tasks = calls.Select((call, index) => RunOneAsync(call, index, decisions, gate, results, traces, publish, iteration, cancellationToken)).ToArray();
         await Task.WhenAll(tasks);
         return (results, traces);
     }

@@ -37,12 +37,14 @@ public sealed class McpToolCatalogTests
     {
         var services = new ServiceCollection();
         services.AddScoped<ScopedTool>();
-        using var provider = services.BuildServiceProvider();
-
-        var exception = Assert.ThrowsExactly<ArgumentException>(() => new McpToolCatalog(
-            provider,
-            [typeof(ScopedTool).Assembly],
-            new HashSet<string>(StringComparer.Ordinal) { "missing" }));
+        var exception = Assert.ThrowsExactly<ArgumentException>(() =>
+        {
+            using var provider = services.BuildServiceProvider();
+            _ = new McpToolCatalog(
+                provider,
+                [typeof(ScopedTool).Assembly],
+                new HashSet<string>(StringComparer.Ordinal) { "missing" });
+        });
 
         Assert.AreEqual("enabledToolNames", exception.ParamName);
         StringAssert.Contains(exception.Message, "Unknown MCP tool name(s): missing.");
