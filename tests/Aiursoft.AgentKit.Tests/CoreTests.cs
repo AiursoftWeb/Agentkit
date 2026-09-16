@@ -1,8 +1,6 @@
 using System.Text.Json;
-using Aiursoft.AgentKit;
 using Aiursoft.AgentKit.AgentRunner;
 using Aiursoft.AgentKit.Messages;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Aiursoft.AgentKit.Tests;
 
 [TestClass]
@@ -18,7 +16,7 @@ public sealed class CoreTests
     [TestMethod] public async Task SortedDescriptors() { var m = new Model(new AgentModelResponse([new TextBlock("done")])); await new BoundedAgentRunner(m).RunAsync(new AgentRunRequest([], [new Tool("z"), new Tool("a")])); CollectionAssert.AreEqual(new[] { "a", "z" }, m.Requests[0].Tools.Select(x => x.Name).ToArray()); }
     [TestMethod] public async Task UnknownSiblingRecovery() { var r = await new BoundedAgentRunner(new Model(Calls(Call("u", "missing"), Call("ok", "ok")), new AgentModelResponse([new TextBlock("done")]))).RunAsync(new AgentRunRequest([], [new Tool("ok")])); Assert.AreEqual(2, r.Results.Count); Assert.AreEqual(ToolOutcome.Failed, r.Results[0].Outcome); Assert.AreEqual(ToolOutcome.Succeeded, r.Results[1].Outcome); }
     [TestMethod] public async Task ExceptionRedacted() { var r = await new BoundedAgentRunner(new Model(Calls(Call("x")), new AgentModelResponse([new TextBlock("done")]))).RunAsync(new AgentRunRequest([], [new Tool("echo", fail: true)])); Assert.IsFalse(r.Results[0].Error?.Contains("secret") == true); }
-    [TestMethod] public async Task ModelFailure() { var m = new Model(); var r = await new BoundedAgentRunner(new ThrowingModel()).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.ModelFailure, r.Outcome); }
+    [TestMethod] public async Task ModelFailure() { var r = await new BoundedAgentRunner(new ThrowingModel()).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.ModelFailure, r.Outcome); }
     private sealed class ThrowingModel : IAgentModelClient { public ValueTask<AgentModelResponse> CompleteAsync(AgentModelRequest r, CancellationToken c) => throw new InvalidOperationException("secret"); }
     [TestMethod] public async Task ExactMax() { var r = await new BoundedAgentRunner(new Model(Calls(Call("a")), Calls(Call("b")))).RunAsync(new AgentRunRequest([], [new Tool("echo")], new(MaxIterations: 2))); Assert.AreEqual(AgentRunOutcome.MaxIterations, r.Outcome); Assert.AreEqual(2, r.Iterations); }
     [TestMethod] public async Task ApprovalAtomic() { var a = new Tool("echo"); var b = new Tool("ask", approval: true); var r = await new BoundedAgentRunner(new Model(Calls(Call("a"), Call("b", "ask")))).RunAsync(new AgentRunRequest([], [a, b])); Assert.AreEqual(AgentRunOutcome.ApprovalDeferred, r.Outcome); Assert.AreEqual("b", r.PendingCalls.Single().Id); Assert.AreEqual("ask", r.PendingCalls.Single().Name); Assert.AreEqual(0, a.CallCount); Assert.AreEqual(0, r.Transcript.Count(x => x.Role == TranscriptRole.Tool)); }
@@ -31,7 +29,7 @@ public sealed class CoreTests
     {
         var callbackCount = 0;
         var model = new Model(Calls(Call("a")), new AgentModelResponse([new TextBlock("done")]));
-        var result = await new BoundedAgentRunner(new AgentModelClientWrapper(model)).RunAsync(new AgentRunRequest([], [new Tool("echo")], new(Approver: (call, _) => { callbackCount++; return ValueTask.FromResult(ApprovalDecision.Reject); })));
+        var result = await new BoundedAgentRunner(new AgentModelClientWrapper(model)).RunAsync(new AgentRunRequest([], [new Tool("echo")], new(Approver: (_, _) => { callbackCount++; return ValueTask.FromResult(ApprovalDecision.Reject); })));
         Assert.AreEqual(1, callbackCount);
         Assert.AreEqual(ToolOutcome.Rejected, result.Results[0].Outcome);
     }

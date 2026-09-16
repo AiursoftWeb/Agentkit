@@ -119,7 +119,6 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
         IReadOnlyList<ToolTrace> priorTraces,
         CancellationToken cancellationToken)
     {
-        var registry = new AgentToolRunner(tools);
         var descriptors = tools.Select(tool => tool.Definition)
             .OrderBy(definition => definition.Name, StringComparer.Ordinal)
             .ToArray();

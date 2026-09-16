@@ -1,9 +1,6 @@
 using System.Text.Json;
-using Aiursoft.AgentKit;
 using Aiursoft.AgentKit.AgentRunner;
-using Aiursoft.AgentKit.Evaluator;
 using Aiursoft.AgentKit.Messages;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Aiursoft.AgentKit.Evaluator.Tests;
 
