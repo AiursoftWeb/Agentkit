@@ -27,6 +27,14 @@ before_script:
               <add key="aiursoft" value="https://nuget.aiursoft.com/v3/index.json" />
               <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
           </packageSources>
+          <packageSourceMapping>
+              <packageSource key="aiursoft">
+                  <package pattern="Aiursoft.*" />
+              </packageSource>
+              <packageSource key="nuget.org">
+                  <package pattern="*" />
+              </packageSource>
+          </packageSourceMapping>
       </configuration>
       NUGETEOF
     - "export PATH=$PATH:$HOME/.dotnet/tools"
