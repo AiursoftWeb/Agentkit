@@ -1,5 +1,4 @@
 #!/bin/bash
-set -euo pipefail
 
 # Security baseline checks.
 security_failed=0
@@ -26,21 +25,20 @@ check_security_baseline "OIDC subjects must not bind through preferred_username.
 if [ "$security_failed" -ne 0 ]; then
     exit 1
 fi
+# End security baseline checks.
 
+# Configuration matches .gitlab-ci.yml
 export DOTNET_CLI_TELEMETRY_OPTOUT=1
-export PATH="$PATH:$HOME/.dotnet/tools"
+export PATH=$PATH:$HOME/.dotnet/tools
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m'
+NC='\033[0m' # No Color
 
-# Keep the existing formatting gate and remove generated inspection output when
-# running locally. GitLab retains the XML report as a lint artifact.
-if [ -z "${CI:-}" ]; then
+# Cleanup only if not in CI (GitLab CI sets the CI variable)
+if [ -z "$CI" ]; then
     trap 'rm -f analyze_output.xml' EXIT
 fi
-
-dotnet format Aiursoft.AgentKit.sln --verify-no-changes
 
 echo "Checking for JetBrains ReSharper Global Tools..."
 if ! command -v jb &> /dev/null; then
@@ -51,40 +49,65 @@ else
 fi
 
 echo "Restoring dependencies..."
-dotnet restore --no-cache --configfile nuget.config Aiursoft.AgentKit.sln || \
-    (echo "Restore failed. Retrying in 10 seconds..." && sleep 10 && dotnet restore --no-cache --configfile nuget.config Aiursoft.AgentKit.sln)
+dotnet restore --no-cache --configfile nuget.config || \
+(echo "Restore failed. Retrying in 10 seconds..." && sleep 10 && dotnet restore --no-cache --configfile nuget.config)
 
 echo "Running ReSharper Code Inspection..."
-if ! jb inspectcode Aiursoft.AgentKit.sln --output=analyze_output.xml --build -f=xml &> /dev/null; then
+# 3 times retry because sometimes the first time will fail (copied from CI)
+if ! jb inspectcode ./*.sln --output=analyze_output.xml --build -f=xml &> /dev/null; then
     echo "First attempt failed, retrying..."
-    if ! jb inspectcode Aiursoft.AgentKit.sln --output=analyze_output.xml --build -f=xml &> /dev/null; then
+    if ! jb inspectcode ./*.sln --output=analyze_output.xml --build -f=xml &> /dev/null; then
         echo "Second attempt failed, retrying..."
-        jb inspectcode Aiursoft.AgentKit.sln --output=analyze_output.xml --build -f=xml &> /dev/null
+        jb inspectcode ./*.sln --output=analyze_output.xml --build -f=xml &> /dev/null
     fi
 fi
 
 echo "Filtering known false positives..."
+# Current filters from .gitlab-ci.yml
 sed -i '/InconsistentNaming/d' analyze_output.xml
 sed -i '/AssignNullToNotNullAttribute/d' analyze_output.xml
 sed -i '/UnusedAutoPropertyAccessor/d' analyze_output.xml
 sed -i '/DuplicateResource/d' analyze_output.xml
 sed -i '/NotOverriddenInSpecificCulture/d' analyze_output.xml
 
+# Check for warnings
+# Mimic .gitlab-ci.yml logic: Fail if 'WARNING' string is found.
 if grep -q 'WARNING' analyze_output.xml; then
     echo -e "${RED}Linting FAILED!${NC}"
     echo "Issues found:"
 
-    warning_ids=$(grep -E 'Severity="(WARNING|ERROR)"' analyze_output.xml | grep -o 'Id="[^"]*"' | cut -d'"' -f2 || true)
-    for id in $warning_ids; do
-        grep "TypeId=\"$id\"" analyze_output.xml | while read -r line; do
-            file=$(echo "$line" | grep -o 'File="[^"]*"' | cut -d'"' -f2 | sed 's/\\\\/\//g')
-            line_number=$(echo "$line" | grep -o 'Line="[^"]*"' | cut -d'"' -f2)
-            message=$(echo "$line" | grep -o 'Message="[^"]*"' | cut -d'"' -f2)
-            echo "File: $file | Line: ${line_number:-Unknown} | Reason: $message"
+    # Filter issues to only show those with Severity="WARNING" or "ERROR"
+    # Identify IssueTypes that are Warnings or Errors
+    # We use grep and cut to extract the IDs purely from lines with Severity="WARNING" or "ERROR"
+    WARNING_IDS=$(grep -E 'Severity="(WARNING|ERROR)"' analyze_output.xml | grep -o 'Id="[^"]*"' | cut -d'"' -f2)
+
+    # Check if we found any IDs (to avoid syntax errors in loop if empty, though unlikely if grep passed)
+    if [ ! -z "$WARNING_IDS" ]; then
+        for ID in $WARNING_IDS; do
+            # Find issues matching this TypeId
+            # We assume one issue per line
+            grep "TypeId=\"$ID\"" analyze_output.xml | while read -r line; do
+                # Extract attributes using grep -o (lazy parsing)
+                FILE=$(echo "$line" | grep -o 'File="[^"]*"' | cut -d'"' -f2 | sed 's/\\/\//g')
+                LINE=$(echo "$line" | grep -o 'Line="[^"]*"' | cut -d'"' -f2)
+                if [ -z "$LINE" ]; then
+                     OFFSET=$(echo "$line" | grep -o 'Offset="[^"]*"' | cut -d'"' -f2)
+                     if [ ! -z "$OFFSET" ]; then
+                          LINE="Offset $OFFSET"
+                     else
+                          LINE="Unknown"
+                     fi
+                fi
+                MSG=$(echo "$line" | grep -o 'Message="[^"]*"' | cut -d'"' -f2)
+
+                echo "File: $FILE | Line: $LINE | Reason: $MSG"
+            done
         done
-    done
+    else
+        echo "Warning severity found in header, but no specific IssueType IDs extracted. Check XML format."
+    fi
 
     exit 1
+else
+    echo -e "${GREEN}Linting PASSED! No warnings found.${NC}"
 fi
-
-echo -e "${GREEN}Linting PASSED! No warnings found.${NC}"

@@ -19,13 +19,13 @@ trim_trailing_whitespace = false
 indent_size = 2
 
 [*.cshtml]
-# Some CSS ReSharper doesn't know how to load.
+# Some CSS Resharper doesn't know how to load.
 resharper_unknown_css_class_highlighting=none
 
-# Some JS ReSharper doesn't know how to load.
+# Some JS Resharper doesn't know how to load.
 resharper_undeclared_global_variable_using_highlighting=suggesting
 
-# Some HTML reference ReSharper doesn't know how to load.
+# Some HTML reference Resharper doesn't know how to load.
 resharper_html_path_error_highlighting=none
 
 # Allow JS global var.
@@ -40,13 +40,10 @@ resharper_not_overridden_in_specific_culture_highlighting=suggestion
 # Allow view render global var.
 resharper_access_to_modified_closure_highlighting=suggestion
 
-# Suppress id not resolved because ReSharper can't understand.
+# Suppress id not resolved because resharper can't understand
 resharper_html_id_not_resolved_highlighting=suggestion
 
 [*.cs]
-dotnet_style_qualification_for_field = false:suggestion
-csharp_style_namespace_declarations = file_scoped:suggestion
-
 # Allow names like `IPAddress`.
 resharper_inconsistent_naming_highlighting=suggestion
 

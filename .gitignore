@@ -3,7 +3,6 @@
 .idea/
 lib
 *.user
-*.suo
 *.min.css
 *.min.js
 bin/
@@ -21,6 +20,3 @@ app.db*
 .angular/
 .yarn/
 *.tsbuildinfo
-artifacts/
-analyze_output.xml
-Cobertura.xml
