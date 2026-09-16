@@ -18,9 +18,8 @@ public sealed class BoundedAgentRunner : IAgentRunner
         ArgumentNullException.ThrowIfNull(request);
 
         var options = request.Options ?? new AgentRunOptions();
-        var tools = request.Tools?.ToArray() ?? throw new ArgumentNullException(nameof(request.Tools));
-        var transcript = request.InitialMessages?.Select(message => message.DeepCopy()).ToList()
-            ?? throw new ArgumentNullException(nameof(request.InitialMessages));
+        var tools = request.Tools.ToArray();
+        var transcript = request.InitialMessages.Select(message => message.DeepCopy()).ToList();
         var results = new List<ToolResult>();
         var traces = new List<ToolTrace>();
         var iterations = 0;

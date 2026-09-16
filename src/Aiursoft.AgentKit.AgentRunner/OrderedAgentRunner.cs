@@ -18,9 +18,8 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var tools = request.Tools?.ToArray() ?? throw new ArgumentNullException(nameof(request.Tools));
-        var transcript = request.InitialMessages?.Select(message => message.DeepCopy()).ToList()
-            ?? throw new ArgumentNullException(nameof(request.InitialMessages));
+        var tools = request.Tools.ToArray();
+        var transcript = request.InitialMessages.Select(message => message.DeepCopy()).ToList();
         var options = request.Options ?? new AgentRunOptions();
         TranscriptValidator.Validate(transcript);
         return ContinueAsync(transcript, tools, options.Iterations, 0, approver, [], [], cancellationToken);
