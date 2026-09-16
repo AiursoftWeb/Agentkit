@@ -24,7 +24,7 @@ public sealed class CoreTests
     [TestMethod] public async Task ApprovalAtomic() { var a = new Tool("echo"); var b = new Tool("ask", approval: true); var r = await new BoundedAgentRunner(new Model(Calls(Call("a"), Call("b", "ask")))).RunAsync(new AgentRunRequest([], [a, b])); Assert.AreEqual(AgentRunOutcome.ApprovalDeferred, r.Outcome); Assert.AreEqual(0, a.Calls); Assert.AreEqual(0, r.Transcript.Count(x => x.Role == TranscriptRole.Tool)); }
     [TestMethod] public async Task DuplicateNames() { var result = await new BoundedAgentRunner(new Model()).RunAsync(new AgentRunRequest([], [new Tool("x"), new Tool("x")])); Assert.AreEqual(AgentRunOutcome.InvalidConfiguration, result.Outcome); }
     [TestMethod] public void TranscriptInvalid() { Assert.Throws<ArgumentException>(() => TranscriptValidator.Validate([TranscriptMessage.Tool([new ToolResult("x", "e", ToolOutcome.Failed)])])); Assert.Throws<ArgumentException>(() => TranscriptValidator.Validate([TranscriptMessage.Assistant([new ToolCallBlock(Call("x"))])])); }
-    [TestMethod] public void JsonClone() { using var d = JsonDocument.Parse("{\"x\":2}"); var c = new ToolCall("x", "e", d.RootElement); d.Dispose(); Assert.AreEqual(2, c.Arguments.GetProperty("x").GetInt32()); }
+    [TestMethod] public void JsonClone() { ToolCall call; using (var document = JsonDocument.Parse("{\"x\":2}")) { call = new ToolCall("x", "e", document.RootElement.Clone()); } Assert.AreEqual(2, call.Arguments.GetProperty("x").GetInt32()); }
     [TestMethod] public async Task FinishReasons() { var l = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("x")], AgentFinishReason.Length))).RunAsync(new AgentRunRequest([], [])); var f = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("x")], AgentFinishReason.Refusal))).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.Length, l.Outcome); Assert.AreEqual(AgentRunOutcome.Refused, f.Outcome); }
     [TestMethod]
     public async Task ApprovalCallbackRunsOnceAndRejectPairs()
@@ -75,9 +75,11 @@ public sealed class CoreTests
     [TestMethod]
     public void ResponseDeepCopiesBlocksAndRejectsNulls()
     {
-        using var document = JsonDocument.Parse("{\"x\":3}");
-        var response = new AgentModelResponse([new ToolCallBlock(new ToolCall("x", "echo", document.RootElement))]);
-        document.Dispose();
+        AgentModelResponse response;
+        using (var document = JsonDocument.Parse("{\"x\":3}"))
+        {
+            response = new AgentModelResponse([new ToolCallBlock(new ToolCall("x", "echo", document.RootElement.Clone()))]);
+        }
         Assert.AreEqual(3, response.ToolCalls[0].Arguments.GetProperty("x").GetInt32());
         Assert.Throws<ArgumentException>(() => new AgentModelResponse(new AgentContentBlock[] { null! }));
         Assert.Throws<ArgumentException>(() => new AgentModelRequest(new TranscriptMessage[] { null! }, []));
@@ -103,8 +105,11 @@ public sealed class CoreTests
     [TestMethod]
     public async Task ObserverPublishesCausalToolActivityWithClonedArguments()
     {
-        using var document = JsonDocument.Parse("{\"query\":\"quartz\"}");
-        var call = new ToolCall("search-1", "echo", document.RootElement);
+        ToolCall call;
+        using (var document = JsonDocument.Parse("{\"query\":\"quartz\"}"))
+        {
+            call = new ToolCall("search-1", "echo", document.RootElement.Clone());
+        }
         var events = new List<AgentRunEvent>();
         var model = new Model(
             new AgentModelResponse([new TextBlock("I will search."), new ToolCallBlock(call)], AgentFinishReason.ToolCalls),
@@ -119,7 +124,6 @@ public sealed class CoreTests
                 return ValueTask.CompletedTask;
             })));
 
-        document.Dispose();
         CollectionAssert.AreEqual(
             new[]
             {
