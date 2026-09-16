@@ -26,12 +26,12 @@ internal sealed class InProcessMcpServer : McpServer
     public override Task<JsonRpcResponse> SendRequestAsync(JsonRpcRequest request, CancellationToken cancellationToken = default) =>
         Task.FromResult(new JsonRpcResponse { Id = request.Id, Result = null });
     public override IAsyncDisposable RegisterNotificationHandler(string method, Func<JsonRpcNotification, CancellationToken, ValueTask> handler) =>
-        EmptyAsyncDisposable.Instance;
+        EmptyAsyncDisposable.Singleton;
     public override ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     private sealed class EmptyAsyncDisposable : IAsyncDisposable
     {
-        public static readonly EmptyAsyncDisposable Instance = new();
+        public static readonly EmptyAsyncDisposable Singleton = new();
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }
