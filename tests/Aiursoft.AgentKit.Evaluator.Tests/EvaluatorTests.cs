@@ -16,7 +16,7 @@ public sealed class EvaluatorTests
         var call = new ToolCall("search-1", "search", JsonSerializer.SerializeToElement(new { query = "docs" }));
         var model = new ScriptedModel(
             new AgentModelResponse([new ToolCallBlock(call)], AgentFinishReason.ToolCalls),
-            new AgentModelResponse([new TextBlock("Answer")], AgentFinishReason.Stop));
+            new AgentModelResponse([new TextBlock("Answer")]));
         var run = await new BoundedAgentRunner(model).RunAsync(new AgentRunRequest([], [new EchoTool("search")]));
         using var state = JsonDocument.Parse("{\"documents\":[\"docs\"]}");
 
@@ -27,9 +27,13 @@ public sealed class EvaluatorTests
             TimeSpan.FromMilliseconds(10));
 
         Assert.IsTrue(evidence.Valid);
-        Assert.AreEqual("docs", evidence.Tools.Single().Parameters.GetProperty("query").GetString());
-        Assert.AreEqual("search-1", evidence.Tools.Single().CallId);
-        Assert.AreEqual(ToolOutcome.Succeeded, evidence.Tools.Single().Outcome);
+        var trace = evidence.Tools.Single();
+        Assert.AreEqual("docs", trace.Parameters.GetProperty("query").GetString());
+        Assert.AreEqual("search-1", trace.CallId);
+        Assert.AreEqual(ToolOutcome.Succeeded, trace.Outcome);
+        Assert.AreEqual(2, trace.Iteration);
+        Assert.IsTrue(trace.Elapsed >= TimeSpan.Zero);
+        Assert.AreEqual(TimeSpan.FromMilliseconds(10), evidence.Elapsed);
         Assert.AreEqual("Answer", evidence.Response);
     }
 
@@ -73,6 +77,11 @@ public sealed class EvaluatorTests
 
         Assert.IsTrue(result.Passed);
         Assert.AreEqual(100d, result.Score);
+        Assert.AreEqual("case", result.CaseId);
+        Assert.IsNull(result.Error);
+        Assert.AreEqual(1, result.Steps!.Count);
+        Assert.AreEqual("search", result.Assertions[0].Id);
+        Assert.AreEqual(string.Empty, result.Assertions[0].Detail);
     }
 
     private sealed class EchoTool(string name) : IAgentTool
@@ -102,6 +111,11 @@ public sealed class EvaluatorTests
 
         Assert.AreEqual(50d, score.Total);
         Assert.IsTrue(score.Incomplete);
+        Assert.AreEqual(1, score.Dimensions.Count);
+        Assert.AreEqual("tools", score.Dimensions[0].Dimension);
+        Assert.AreEqual(50d, score.Dimensions[0].Score);
+        Assert.AreEqual(1d, score.Dimensions[0].Weight);
+        Assert.AreEqual(2, score.Cases.Count);
         _ = assertion;
         _ = empty;
     }

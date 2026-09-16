@@ -22,9 +22,14 @@ public sealed class McpToolCatalogTests
             new HashSet<string>(StringComparer.Ordinal) { "echo" });
 
         Assert.AreEqual(1, catalog.Tools.Count);
-        Assert.AreEqual("echo", catalog.Tools[0].Name);
-        StringAssert.Contains(catalog.Tools[0].InputSchema.GetRawText(), "text");
-        Assert.IsFalse(catalog.Tools[0].RequiresApproval);
+        var registration = catalog.Tools[0];
+        Assert.AreEqual("echo", registration.Name);
+        Assert.AreEqual("Returns its input.", registration.Description);
+        Assert.AreEqual(registration.Description ?? registration.Title ?? registration.Name, registration.Definition.Description);
+        Assert.AreEqual(typeof(ScopedTool), registration.SourceType);
+        Assert.AreEqual(nameof(ScopedTool.Echo), registration.SourceMethod.Name);
+        StringAssert.Contains(registration.InputSchema.GetRawText(), "text");
+        Assert.IsFalse(registration.RequiresApproval);
 
         await using var session = await catalog.CreateSessionAsync();
         using var arguments = JsonDocument.Parse("{\"text\":\"hello\"}");

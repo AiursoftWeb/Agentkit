@@ -48,7 +48,8 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
         if (pending.Result is not null)
             throw new InvalidOperationException("Tool call was already resolved.");
 
-        var registry = new AgentToolRunner(tools);
+        var toolList = tools.ToArray();
+        var registry = new AgentToolRunner(toolList);
         ToolResult result;
         ToolTrace? trace = null;
         if (decision == ApprovalDecision.Reject)
@@ -99,7 +100,7 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
         TranscriptValidator.Validate(transcript);
         return await ContinueAsync(
             transcript,
-            tools.ToArray(),
+            toolList,
             checkpoint.MaxIterations,
             checkpoint.Iterations,
             null,
