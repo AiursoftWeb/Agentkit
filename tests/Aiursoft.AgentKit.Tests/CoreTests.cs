@@ -80,6 +80,8 @@ public sealed class CoreTests
         document.Dispose();
         Assert.AreEqual(3, response.ToolCalls[0].Arguments.GetProperty("x").GetInt32());
         Assert.Throws<ArgumentException>(() => new AgentModelResponse(new AgentContentBlock[] { null! }));
+        Assert.Throws<ArgumentException>(() => new AgentModelRequest(new TranscriptMessage[] { null! }, []));
+        Assert.Throws<ArgumentException>(() => new AgentModelRequest([], new ToolDefinition[] { null! }));
     }
 
     [TestMethod]

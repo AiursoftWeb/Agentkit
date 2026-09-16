@@ -10,13 +10,15 @@ internal sealed class AgentToolRunner
     public AgentToolRunner(IEnumerable<IAgentTool> tools)
     {
         ArgumentNullException.ThrowIfNull(tools);
-        var list = tools.ToArray();
+        var list = tools.Cast<IAgentTool?>().ToArray();
         if (list.Any(tool => tool is null)) throw new ArgumentException("Tools cannot contain null entries.", nameof(tools));
-        if (list.Any(tool => tool.Definition is null)) throw new ArgumentException("Every tool must have a definition.", nameof(tools));
-        if (list.GroupBy(tool => tool.Definition.Name, StringComparer.Ordinal).Any(group => group.Count() > 1))
+
+        var nonNullTools = list.Select(tool => tool!).ToArray();
+        if (nonNullTools.Any(tool => (object?)tool.Definition is null)) throw new ArgumentException("Every tool must have a definition.", nameof(tools));
+        if (nonNullTools.GroupBy(tool => tool.Definition.Name, StringComparer.Ordinal).Any(group => group.Count() > 1))
             throw new ArgumentException("Tool names must be unique.", nameof(tools));
 
-        this.tools = list.ToDictionary(tool => tool.Definition.Name, StringComparer.Ordinal);
+        this.tools = nonNullTools.ToDictionary(tool => tool.Definition.Name, StringComparer.Ordinal);
     }
 
     public async ValueTask<(ToolResult[] Results, ToolTrace[] Traces)> RunAsync(
@@ -28,11 +30,11 @@ internal sealed class AgentToolRunner
         CancellationToken cancellationToken)
     {
         using var gate = new SemaphoreSlim(maxConcurrency);
-        var results = new ToolResult[calls.Count];
-        var traces = new ToolTrace[calls.Count];
+        var results = new ToolResult?[calls.Count];
+        var traces = new ToolTrace?[calls.Count];
         var tasks = calls.Select((call, index) => RunOneAsync(call, index, decisions, gate, results, traces, publish, iteration, cancellationToken)).ToArray();
         await Task.WhenAll(tasks);
-        return (results, traces);
+        return (results.Select(result => result!).ToArray(), traces.Select(trace => trace!).ToArray());
     }
 
     private async Task RunOneAsync(
@@ -40,8 +42,8 @@ internal sealed class AgentToolRunner
         int index,
         IReadOnlyDictionary<string, ApprovalDecision> decisions,
         SemaphoreSlim gate,
-        ToolResult[] results,
-        ToolTrace[] traces,
+        ToolResult?[] results,
+        ToolTrace?[] traces,
         Func<AgentRunEvent, CancellationToken, ValueTask> publish,
         int iteration,
         CancellationToken cancellationToken)
@@ -88,11 +90,11 @@ internal sealed class AgentToolRunner
         }
         finally
         {
-            if (results[index] is not null)
+            if (results[index] is { } result)
             {
-                traces[index] = new ToolTrace(call.Id, call.Name, results[index].Outcome, Stopwatch.GetElapsedTime(started));
+                traces[index] = new ToolTrace(call.Id, call.Name, result.Outcome, Stopwatch.GetElapsedTime(started));
                 await publish(new AgentRunEvent(0, iteration, AgentRunEventKind.ToolExecutionCompleted,
-                    ToolName: call.Name, ToolOutcome: results[index].Outcome), cancellationToken);
+                    ToolName: call.Name, ToolOutcome: result.Outcome), cancellationToken);
             }
 
             gate.Release();

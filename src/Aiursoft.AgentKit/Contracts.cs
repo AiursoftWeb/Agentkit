@@ -106,14 +106,14 @@ public sealed record AgentModelRequest
     {
         ArgumentNullException.ThrowIfNull(transcript);
         ArgumentNullException.ThrowIfNull(tools);
-        var messages = transcript.ToArray();
-        var descriptors = tools.ToArray();
+        var messages = transcript.Cast<TranscriptMessage?>().ToArray();
+        var descriptors = tools.Cast<ToolDefinition?>().ToArray();
         if (messages.Any(message => message is null)) throw new ArgumentException("Transcript cannot contain null messages.", nameof(transcript));
         if (descriptors.Any(descriptor => descriptor is null)) throw new ArgumentException("Tool descriptors cannot contain null values.", nameof(tools));
 
-        Transcript = messages.Select(message => message.DeepCopy()).ToArray();
+        Transcript = messages.Select(message => message!.DeepCopy()).ToArray();
         Tools = descriptors
-            .Select(descriptor => new ToolDefinition(descriptor.Name, descriptor.Description, descriptor.InputSchema, descriptor.RequiresApproval))
+            .Select(descriptor => new ToolDefinition(descriptor!.Name, descriptor.Description, descriptor.InputSchema, descriptor.RequiresApproval))
             .OrderBy(descriptor => descriptor.Name, StringComparer.Ordinal)
             .ToArray();
     }
@@ -127,9 +127,9 @@ public sealed record AgentModelResponse
     public AgentModelResponse(IEnumerable<AgentContentBlock> content, AgentFinishReason finishReason = AgentFinishReason.Stop)
     {
         ArgumentNullException.ThrowIfNull(content);
-        var blocks = content.ToArray();
+        var blocks = content.Cast<AgentContentBlock?>().ToArray();
         if (blocks.Any(block => block is null)) throw new ArgumentException("Content cannot contain null blocks.", nameof(content));
-        Content = blocks.Select(ContentBlockCloner.DeepCopy).ToArray();
+        Content = blocks.Select(block => ContentBlockCloner.DeepCopy(block!)).ToArray();
         FinishReason = finishReason;
     }
 
