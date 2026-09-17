@@ -53,7 +53,8 @@ public sealed record AgentRunEvent(
     string? ToolName = null,
     ToolOutcome? ToolOutcome = null,
     AgentRunOutcome? RunOutcome = null,
-    bool? HasToolCalls = null)
+    bool? HasToolCalls = null,
+    string? ToolCallId = null)
 {
     public AgentRunEvent DeepCopy() => this with
     {
@@ -83,6 +84,13 @@ public sealed record ToolDefinition
         : this(name, description, JsonSerializer.SerializeToElement(new object()), requiresApproval)
     {
     }
+}
+
+public sealed record AgentToolExecutionContext(string ToolCallId, string ToolName, int Iteration);
+
+public interface IAgentToolExecutionObserver
+{
+    void SetExecutionContext(AgentToolExecutionContext context);
 }
 
 public interface IAgentTool

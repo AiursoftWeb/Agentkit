@@ -72,10 +72,13 @@ internal sealed class AgentToolRunner
                 return;
             }
 
-            await publish(new AgentRunEvent(0, iteration, AgentRunEventKind.ToolExecutionStarted, ToolName: call.Name), cancellationToken);
+            await publish(new AgentRunEvent(0, iteration, AgentRunEventKind.ToolExecutionStarted,
+                ToolCallId: call.Id, ToolName: call.Name), cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
+                if (tool is IAgentToolExecutionObserver observer)
+                    observer.SetExecutionContext(new AgentToolExecutionContext(call.Id, call.Name, iteration));
                 var output = await tool.ExecuteAsync(call.Arguments.Clone(), cancellationToken);
                 results[index] = new ToolResult(call.Id, call.Name, ToolOutcome.Succeeded, output.Clone());
             }
@@ -94,7 +97,7 @@ internal sealed class AgentToolRunner
             {
                 traces[index] = new ToolTrace(call.Id, call.Name, result.Outcome, Stopwatch.GetElapsedTime(started));
                 await publish(new AgentRunEvent(0, iteration, AgentRunEventKind.ToolExecutionCompleted,
-                    ToolName: call.Name, ToolOutcome: result.Outcome), cancellationToken);
+                    ToolCallId: call.Id, ToolName: call.Name, ToolOutcome: result.Outcome), cancellationToken);
             }
 
             gate.Release();

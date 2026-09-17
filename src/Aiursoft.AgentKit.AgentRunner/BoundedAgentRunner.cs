@@ -159,7 +159,7 @@ public sealed class BoundedAgentRunner : IAgentRunner
                     foreach (var call in deferredCalls)
                     {
                         await PublishAsync(new AgentRunEvent(0, iterations, AgentRunEventKind.ToolExecutionCompleted,
-                            ToolName: call.Name, ToolOutcome: ToolOutcome.Deferred), cancellationToken);
+                            ToolCallId: call.Id, ToolName: call.Name, ToolOutcome: ToolOutcome.Deferred), cancellationToken);
                     }
                     return await CompleteAsync(AgentRunOutcome.ApprovalDeferred, deferredCalls);
                 }
