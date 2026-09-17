@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Aiursoft.AgentKit.Messages;
+using Newtonsoft.Json.Linq;
 
 namespace Aiursoft.AgentKit.Evaluator;
 
@@ -19,7 +19,7 @@ public static class AgentRunEvidenceAdapter
     public static EvaluationStepEvidence ToStepEvidence(
         EvaluationStepIdentity identity,
         AgentRunResult run,
-        JsonElement state,
+        JToken state,
         TimeSpan elapsed)
     {
         ArgumentNullException.ThrowIfNull(identity);
@@ -36,8 +36,8 @@ public static class AgentRunEvidenceAdapter
             var result = results[trace.CallId];
             return new EvaluationToolTrace(
                 trace.ToolName,
-                call.Arguments.Clone(),
-                result.Output?.Clone() ?? JsonSerializer.SerializeToElement<object?>(null),
+                call.Arguments.DeepClone(),
+                result.Output?.DeepClone() ?? JValue.CreateNull(),
                 run.Iterations,
                 trace.Duration,
                 trace.CallId,
@@ -50,7 +50,7 @@ public static class AgentRunEvidenceAdapter
             identity.SubjectId,
             identity.ContextId,
             traces,
-            state.Clone(),
+            state.DeepClone(),
             run.FinalText,
             run.Iterations,
             elapsed,

@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Aiursoft.AgentKit.Messages;
+using Newtonsoft.Json.Linq;
 
 namespace Aiursoft.AgentKit.Evaluator;
 
@@ -31,7 +31,7 @@ public sealed record EvaluationAssertion(
     double Penalty,
     bool Required,
     bool HardFail,
-    JsonElement Match,
+    JToken Match,
     string Comment = "");
 
 public sealed record EvaluationExpectation(IReadOnlyList<EvaluationAssertion> Assertions);
@@ -49,8 +49,8 @@ public sealed record EvaluationCase(
 
 public sealed record EvaluationToolTrace(
     string Name,
-    JsonElement Parameters,
-    JsonElement Result,
+    JToken Parameters,
+    JToken Result,
     int Iteration,
     TimeSpan Elapsed,
     string? CallId = null,
@@ -61,7 +61,7 @@ public sealed record EvaluationStepEvidence(
     string? SubjectId,
     string? ContextId,
     IReadOnlyList<EvaluationToolTrace> Tools,
-    JsonElement State,
+    JToken State,
     string Response,
     int IterationCount,
     TimeSpan Elapsed,

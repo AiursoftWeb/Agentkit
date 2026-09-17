@@ -1,4 +1,5 @@
-using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using ModelContextProtocol.Server;
 
@@ -25,13 +26,13 @@ public sealed class McpToolCatalogTests
         Assert.AreEqual(registration.Description ?? registration.Title ?? registration.Name, registration.Definition.Description);
         Assert.AreEqual(typeof(ScopedTool), registration.SourceType);
         Assert.AreEqual(nameof(ScopedTool.Echo), registration.SourceMethod.Name);
-        StringAssert.Contains(registration.InputSchema.GetRawText(), "text");
+        StringAssert.Contains(registration.InputSchema.ToString(Formatting.None), "text");
         Assert.IsFalse(registration.RequiresApproval);
 
         await using var session = await catalog.CreateSessionAsync();
-        using var arguments = JsonDocument.Parse("{\"text\":\"hello\"}");
-        var output = await session.Tools.Single().ExecuteAsync(arguments.RootElement, CancellationToken.None);
-        StringAssert.Contains(output.GetRawText(), "hello");
+        var arguments = JObject.Parse("{\"text\":\"hello\"}");
+        var output = await session.Tools.Single().ExecuteAsync(arguments, CancellationToken.None);
+        StringAssert.Contains(output.ToString(Formatting.None), "hello");
     }
 
     [TestMethod]

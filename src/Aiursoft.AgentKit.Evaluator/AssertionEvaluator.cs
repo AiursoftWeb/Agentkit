@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Aiursoft.AgentKit.Evaluator;
 
@@ -42,9 +42,9 @@ public sealed class AssertionEvaluator : IEvaluationAssertionEvaluator
                     EvaluationAssertionKinds.Tool => MatchTool(assertion.Match, stepEvidence.Tools),
                     EvaluationAssertionKinds.ForbidTool => MatchTool(assertion.Match, stepEvidence.Tools),
                     EvaluationAssertionKinds.State => JsonMatcher.Matches(assertion.Match, stepEvidence.State),
-                    EvaluationAssertionKinds.Response => JsonMatcher.Matches(assertion.Match, JsonSerializer.SerializeToElement(stepEvidence.Response)),
-                    EvaluationAssertionKinds.MaxToolCalls => stepEvidence.Tools.Count <= assertion.Match.GetInt32(),
-                    EvaluationAssertionKinds.MaxIterations => stepEvidence.IterationCount <= assertion.Match.GetInt32(),
+                    EvaluationAssertionKinds.Response => JsonMatcher.Matches(assertion.Match, new JValue(stepEvidence.Response)),
+                    EvaluationAssertionKinds.MaxToolCalls => stepEvidence.Tools.Count <= assertion.Match.Value<int>(),
+                    EvaluationAssertionKinds.MaxIterations => stepEvidence.IterationCount <= assertion.Match.Value<int>(),
                     _ => false
                 });
                 var forbidden = assertion.Kind == EvaluationAssertionKinds.ForbidTool;
@@ -73,17 +73,18 @@ public sealed class AssertionEvaluator : IEvaluationAssertionEvaluator
         return new EvaluationCaseResult(evaluationCase.Id, evaluationCase.Weight, passed, valid, results, error, evidence.Steps);
     }
 
-    private static bool MatchTool(JsonElement match, IReadOnlyList<EvaluationToolTrace> tools)
+    private static bool MatchTool(JToken match, IReadOnlyList<EvaluationToolTrace> tools)
     {
-        var name = match.GetProperty("name").GetString();
+        if (match is not JObject obj) return false;
+        var name = obj.Value<string>("name");
         var candidates = tools.Where(tool => tool.Name == name);
-        if (match.TryGetProperty("parameters", out var parameters))
+        if (obj["parameters"] is { } parameters)
             candidates = candidates.Where(tool => JsonMatcher.Matches(parameters, tool.Parameters));
-        if (match.TryGetProperty("result", out var result))
+        if (obj["result"] is { } result)
             candidates = candidates.Where(tool => JsonMatcher.Matches(result, tool.Result));
         var count = candidates.Count();
-        if (match.TryGetProperty("minCount", out var minimum) && count < minimum.GetInt32()) return false;
-        if (match.TryGetProperty("maxCount", out var maximum) && count > maximum.GetInt32()) return false;
+        if (obj["minCount"]?.Value<int>() is { } minimum && count < minimum) return false;
+        if (obj["maxCount"]?.Value<int>() is { } maximum && count > maximum) return false;
         return count > 0;
     }
 }

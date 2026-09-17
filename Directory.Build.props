@@ -8,7 +8,7 @@
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</RepositoryUrl>
-    <PackageVersion>0.1.0-local.10</PackageVersion>
+    <PackageVersion>0.1.0-local.11</PackageVersion>
     <Authors>Aiursoft</Authors>
     <Company>Aiursoft</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Reflection;
 using System.Text.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ModelContextProtocol.Protocol;
 using ModelContextProtocol.Server;
 using Microsoft.Extensions.DependencyInjection;
@@ -85,7 +87,7 @@ public sealed class McpToolCatalog
             protocol.Name,
             protocol.Title,
             protocol.Description,
-            protocol.InputSchema,
+            JToken.Parse(protocol.InputSchema.GetRawText()),
             this.requiresApproval(discovered.Method),
             discovered.Type,
             discovered.Method,
@@ -131,7 +133,7 @@ public sealed record McpToolRegistration(
     string Name,
     string? Title,
     string? Description,
-    JsonElement InputSchema,
+    JToken InputSchema,
     bool RequiresApproval,
     Type SourceType,
     MethodInfo SourceMethod,
@@ -166,13 +168,13 @@ internal sealed class McpAgentTool(McpToolRegistration registration, IServicePro
 {
     public ToolDefinition Definition { get; } = registration.Definition;
 
-    public async ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken)
+    public async ValueTask<JToken> ExecuteAsync(JToken arguments, CancellationToken cancellationToken)
     {
-        if (arguments.ValueKind != JsonValueKind.Object)
+        if (arguments is not JObject obj)
             throw new ArgumentException("MCP tool arguments must be an object.", nameof(arguments));
 
-        var jsonArguments = arguments.EnumerateObject()
-            .ToDictionary(property => property.Name, property => property.Value.Clone(), StringComparer.Ordinal);
+        var jsonArguments = obj.Properties()
+            .ToDictionary(property => property.Name, property => ToJsonElement(property.Value), StringComparer.Ordinal);
         var request = new RequestContext<CallToolRequestParams>(
             server: InProcessMcpServer.Instance,
             jsonRpcRequest: new JsonRpcRequest { Method = "tools/call" },
@@ -181,6 +183,12 @@ internal sealed class McpAgentTool(McpToolRegistration registration, IServicePro
             Services = scopedServices
         };
         var result = await registration.Tool.InvokeAsync(request, cancellationToken);
-        return JsonSerializer.SerializeToElement(result, result.GetType());
+        return JToken.FromObject(result);
+    }
+
+    private static JsonElement ToJsonElement(JToken token)
+    {
+        using var document = JsonDocument.Parse(token.ToString(Formatting.None));
+        return document.RootElement.Clone();
     }
 }

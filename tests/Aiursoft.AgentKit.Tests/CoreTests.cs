@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using Aiursoft.AgentKit.AgentRunner;
 using Aiursoft.AgentKit.Messages;
 namespace Aiursoft.AgentKit.Tests;
@@ -6,10 +6,10 @@ namespace Aiursoft.AgentKit.Tests;
 [TestClass]
 public sealed class CoreTests
 {
-    private sealed class Tool : IAgentTool { public ToolDefinition Definition { get; } public int CallCount; private readonly bool fail; public Tool(string name, bool approval = false, bool fail = false) { Definition = new(name, name, approval); this.fail = fail; } public ValueTask<JsonElement> ExecuteAsync(JsonElement a, CancellationToken c) { CallCount++; if (fail) throw new InvalidOperationException("secret"); return ValueTask.FromResult(a.Clone()); } }
+    private sealed class Tool : IAgentTool { public ToolDefinition Definition { get; } public int CallCount; private readonly bool fail; public Tool(string name, bool approval = false, bool fail = false) { Definition = new(name, name, approval); this.fail = fail; } public ValueTask<JToken> ExecuteAsync(JToken a, CancellationToken c) { CallCount++; if (fail) throw new InvalidOperationException("secret"); return ValueTask.FromResult(a.DeepClone()); } }
     private sealed class Model : IAgentModelClient { private readonly Queue<AgentModelResponse> responses; public List<AgentModelRequest> Requests = []; public Model(params AgentModelResponse[] r) { responses = new(r); } public ValueTask<AgentModelResponse> CompleteAsync(AgentModelRequest q, CancellationToken c) { Requests.Add(q); return ValueTask.FromResult(responses.Count > 0 ? responses.Dequeue() : new AgentModelResponse([new TextBlock("done")])); } }
-    private sealed class ContextTool(string name) : IAgentTool, IAgentToolExecutionObserver { public ToolDefinition Definition { get; } = new(name, name); public AgentToolExecutionContext? Context { get; private set; } public void SetExecutionContext(AgentToolExecutionContext context) => Context = context; public ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken) { Assert.IsNotNull(Context); return ValueTask.FromResult(arguments.Clone()); } }
-    static ToolCall Call(string id, string name = "echo") => new(id, name, JsonDocument.Parse("{\"x\":1}").RootElement);
+    private sealed class ContextTool(string name) : IAgentTool, IAgentToolExecutionObserver { public ToolDefinition Definition { get; } = new(name, name); public AgentToolExecutionContext? Context { get; private set; } public void SetExecutionContext(AgentToolExecutionContext context) => Context = context; public ValueTask<JToken> ExecuteAsync(JToken arguments, CancellationToken cancellationToken) { Assert.IsNotNull(Context); return ValueTask.FromResult(arguments.DeepClone()); } }
+    static ToolCall Call(string id, string name = "echo") => new(id, name, JToken.Parse("{\"x\":1}"));
     static AgentModelResponse Calls(params ToolCall[] calls) => new(calls.Select(x => (AgentContentBlock)new ToolCallBlock(x)), AgentFinishReason.ToolCalls);
     [TestMethod] public async Task PlainText() { var r = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("ok")]))).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.Completed, r.Outcome); }
     [TestMethod] public async Task SingleTool() { var r = await new BoundedAgentRunner(new Model(Calls(Call("a")), new AgentModelResponse([new TextBlock("done")]))).RunAsync(new AgentRunRequest([], [new Tool("echo")])); Assert.AreEqual(ToolOutcome.Succeeded, r.Results[0].Outcome); Assert.AreEqual(ToolOutcome.Succeeded, r.Traces[0].Outcome); Assert.AreEqual(1, r.Transcript.Count(x => x.Role == TranscriptRole.Tool)); }
@@ -23,7 +23,7 @@ public sealed class CoreTests
     [TestMethod] public async Task ApprovalAtomic() { var a = new Tool("echo"); var b = new Tool("ask", approval: true); var r = await new BoundedAgentRunner(new Model(Calls(Call("a"), Call("b", "ask")))).RunAsync(new AgentRunRequest([], [a, b])); Assert.AreEqual(AgentRunOutcome.ApprovalDeferred, r.Outcome); Assert.AreEqual("b", r.PendingCalls.Single().Id); Assert.AreEqual("ask", r.PendingCalls.Single().Name); Assert.AreEqual(0, a.CallCount); Assert.AreEqual(0, r.Transcript.Count(x => x.Role == TranscriptRole.Tool)); }
     [TestMethod] public async Task DuplicateNames() { var result = await new BoundedAgentRunner(new Model()).RunAsync(new AgentRunRequest([], [new Tool("x"), new Tool("x")])); Assert.AreEqual(AgentRunOutcome.InvalidConfiguration, result.Outcome); }
     [TestMethod] public void TranscriptInvalid() { Assert.Throws<ArgumentException>(() => TranscriptValidator.Validate([TranscriptMessage.Tool([new ToolResult("x", "e", ToolOutcome.Failed)])])); Assert.Throws<ArgumentException>(() => TranscriptValidator.Validate([TranscriptMessage.Assistant([new ToolCallBlock(Call("x"))])])); }
-    [TestMethod] public void JsonClone() { ToolCall call; using (var document = JsonDocument.Parse("{\"x\":2}")) { call = new ToolCall("x", "e", document.RootElement.Clone()); } Assert.AreEqual(2, call.Arguments.GetProperty("x").GetInt32()); }
+    [TestMethod] public void JsonClone() { var source = JObject.Parse("{\"x\":2}"); var call = new ToolCall("x", "e", source); source["x"] = 3; Assert.AreEqual(2, call.Arguments["x"]!.Value<int>()); }
     [TestMethod] public async Task FinishReasons() { var l = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("x")], AgentFinishReason.Length))).RunAsync(new AgentRunRequest([], [])); var f = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("x")], AgentFinishReason.Refusal))).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.Length, l.Outcome); Assert.AreEqual(AgentRunOutcome.Refused, f.Outcome); }
     [TestMethod]
     public async Task ApprovalCallbackRunsOnceAndRejectPairs()
@@ -75,11 +75,10 @@ public sealed class CoreTests
     public void ResponseDeepCopiesBlocksAndRejectsNulls()
     {
         AgentModelResponse response;
-        using (var document = JsonDocument.Parse("{\"x\":3}"))
-        {
-            response = new AgentModelResponse([new ToolCallBlock(new ToolCall("x", "echo", document.RootElement.Clone()))]);
-        }
-        Assert.AreEqual(3, response.ToolCalls[0].Arguments.GetProperty("x").GetInt32());
+        var source = JObject.Parse("{\"x\":3}");
+        response = new AgentModelResponse([new ToolCallBlock(new ToolCall("x", "echo", source))]);
+        source["x"] = 4;
+        Assert.AreEqual(3, response.ToolCalls[0].Arguments["x"]!.Value<int>());
         Assert.Throws<ArgumentException>(() => new AgentModelResponse(new AgentContentBlock[] { null! }));
         Assert.Throws<ArgumentException>(() => new AgentModelRequest(new TranscriptMessage[] { null! }, []));
         Assert.Throws<ArgumentException>(() => new AgentModelRequest([], new ToolDefinition[] { null! }));
@@ -104,11 +103,7 @@ public sealed class CoreTests
     [TestMethod]
     public async Task ObserverPublishesCausalToolActivityWithClonedArguments()
     {
-        ToolCall call;
-        using (var document = JsonDocument.Parse("{\"query\":\"quartz\"}"))
-        {
-            call = new ToolCall("search-1", "echo", document.RootElement.Clone());
-        }
+        var call = new ToolCall("search-1", "echo", JObject.Parse("{\"query\":\"quartz\"}"));
         var events = new List<AgentRunEvent>();
         var model = new Model(
             new AgentModelResponse([new TextBlock("I will search."), new ToolCallBlock(call)], AgentFinishReason.ToolCalls),
@@ -148,7 +143,7 @@ public sealed class CoreTests
         Assert.AreEqual("echo", completedTool.ToolName);
         Assert.AreEqual(ToolOutcome.Succeeded, completedTool.ToolOutcome);
         Assert.AreEqual("quartz", events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolCallProposed)
-            .ToolCall!.Arguments.GetProperty("query").GetString());
+            .ToolCall!.Arguments["query"]?.ToObject<string>());
         Assert.AreEqual(AgentRunOutcome.Completed, events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.RunCompleted).RunOutcome);
         Assert.AreEqual(AgentRunOutcome.Completed, result.Outcome);
     }
@@ -267,7 +262,7 @@ public sealed class CoreTests
         private readonly CancellationTokenSource _source;
         public CancellingTool(CancellationTokenSource source) { _source = source; Definition = new ToolDefinition("echo", "echo"); }
         public ToolDefinition Definition { get; }
-        public ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken)
+        public ValueTask<JToken> ExecuteAsync(JToken arguments, CancellationToken cancellationToken)
         { _source.Cancel(); cancellationToken.ThrowIfCancellationRequested(); return ValueTask.FromResult(arguments); }
     }
 

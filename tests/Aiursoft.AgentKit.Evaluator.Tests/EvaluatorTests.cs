@@ -1,4 +1,4 @@
-using System.Text.Json;
+using Newtonsoft.Json.Linq;
 using Aiursoft.AgentKit.AgentRunner;
 using Aiursoft.AgentKit.Messages;
 
@@ -10,22 +10,22 @@ public sealed class EvaluatorTests
     [TestMethod]
     public async Task AgentRunEvidencePreservesToolCorrelation()
     {
-        var call = new ToolCall("search-1", "search", JsonSerializer.SerializeToElement(new { query = "docs" }));
+        var call = new ToolCall("search-1", "search", JToken.FromObject(new { query = "docs" }));
         var model = new ScriptedModel(
             new AgentModelResponse([new ToolCallBlock(call)], AgentFinishReason.ToolCalls),
             new AgentModelResponse([new TextBlock("Answer")]));
         var run = await new BoundedAgentRunner(model).RunAsync(new AgentRunRequest([], [new EchoTool("search")]));
-        using var state = JsonDocument.Parse("{\"documents\":[\"docs\"]}");
+        var state = JToken.Parse("{\"documents\":[\"docs\"]}");
 
         var evidence = AgentRunEvidenceAdapter.ToStepEvidence(
             new EvaluationStepIdentity(0, "subject", "context"),
             run,
-            state.RootElement,
+            state,
             TimeSpan.FromMilliseconds(10));
 
         Assert.IsTrue(evidence.Valid);
         var trace = evidence.Tools.Single();
-        Assert.AreEqual("docs", trace.Parameters.GetProperty("query").GetString());
+        Assert.AreEqual("docs", trace.Parameters["query"]?.ToObject<string>());
         Assert.AreEqual("search-1", trace.CallId);
         Assert.AreEqual(ToolOutcome.Succeeded, trace.Outcome);
         Assert.AreEqual(2, trace.Iteration);
@@ -37,35 +37,35 @@ public sealed class EvaluatorTests
     [TestMethod]
     public void JsonMatcherSupportsSubsetAndUnorderedOperators()
     {
-        using var subset = JsonDocument.Parse("{\"$subset\":[1,3]}");
-        using var unordered = JsonDocument.Parse("{\"$unorderedEquals\":[\"a\",\"b\"]}");
-        using var numbers = JsonDocument.Parse("[1,2,3]");
-        using var letters = JsonDocument.Parse("[\"b\",\"a\"]");
+        var subset = JToken.Parse("{\"$subset\":[1,3]}");
+        var unordered = JToken.Parse("{\"$unorderedEquals\":[\"a\",\"b\"]}");
+        var numbers = JToken.Parse("[1,2,3]");
+        var letters = JToken.Parse("[\"b\",\"a\"]");
 
-        Assert.IsTrue(JsonMatcher.Matches(subset.RootElement, numbers.RootElement));
-        Assert.IsTrue(JsonMatcher.Matches(unordered.RootElement, letters.RootElement));
+        Assert.IsTrue(JsonMatcher.Matches(subset, numbers));
+        Assert.IsTrue(JsonMatcher.Matches(unordered, letters));
     }
 
     [TestMethod]
     public void RequiredAndForbiddenAssertionsDetermineCaseOutcome()
     {
-        using var requiredMatch = JsonDocument.Parse("{\"name\":\"search\",\"minCount\":1}");
-        using var forbiddenMatch = JsonDocument.Parse("{\"name\":\"delete\"}");
-        using var empty = JsonDocument.Parse("{}");
+        var requiredMatch = JToken.Parse("{\"name\":\"search\",\"minCount\":1}");
+        var forbiddenMatch = JToken.Parse("{\"name\":\"delete\"}");
+        var empty = JToken.Parse("{}");
         var evaluationCase = new EvaluationCase("case", 1, [new EvaluationStep(
             0,
             "user",
             "board",
             new EvaluationExpectation([
-                new EvaluationAssertion("search", EvaluationAssertionKinds.Tool, "tools", 10, 0, true, false, requiredMatch.RootElement),
-                new EvaluationAssertion("no-delete", EvaluationAssertionKinds.ForbidTool, "safety", 0, -5, true, true, forbiddenMatch.RootElement)
+                new EvaluationAssertion("search", EvaluationAssertionKinds.Tool, "tools", 10, 0, true, false, requiredMatch),
+                new EvaluationAssertion("no-delete", EvaluationAssertionKinds.ForbidTool, "safety", 0, -5, true, true, forbiddenMatch)
             ]))]);
         var evidence = new EvaluationEvidence([new EvaluationStepEvidence(
             0,
             "user",
             "board",
-            [new EvaluationToolTrace("search", empty.RootElement, empty.RootElement, 1, TimeSpan.Zero)],
-            empty.RootElement,
+            [new EvaluationToolTrace("search", empty, empty, 1, TimeSpan.Zero)],
+            empty,
             "done",
             1,
             TimeSpan.Zero)]);
@@ -84,8 +84,8 @@ public sealed class EvaluatorTests
     private sealed class EchoTool(string name) : IAgentTool
     {
         public ToolDefinition Definition { get; } = new(name, name);
-        public ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken) =>
-            ValueTask.FromResult(arguments.Clone());
+        public ValueTask<JToken> ExecuteAsync(JToken arguments, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(arguments.DeepClone());
     }
 
     private sealed class ScriptedModel(params AgentModelResponse[] responses) : IAgentModelClient
@@ -98,9 +98,9 @@ public sealed class EvaluatorTests
     [TestMethod]
     public void InvalidEvidenceStaysInWeightedDenominator()
     {
-        using var match = JsonDocument.Parse("{\"name\":\"search\"}");
-        using var empty = JsonDocument.Parse("{}");
-        var assertion = new EvaluationAssertion("search", EvaluationAssertionKinds.Tool, "tools", 10, 0, true, false, match.RootElement);
+        var match = JToken.Parse("{\"name\":\"search\"}");
+        var empty = JToken.Parse("{}");
+        var assertion = new EvaluationAssertion("search", EvaluationAssertionKinds.Tool, "tools", 10, 0, true, false, match);
         var valid = new EvaluationCaseResult("one", 1, true, true, [new EvaluationAssertionResult("search", "tools", true, 10, 10, true, false, "")]);
         var invalid = new EvaluationCaseResult("two", 1, false, false, [new EvaluationAssertionResult("search", "tools", true, 10, 10, true, false, "")]);
 

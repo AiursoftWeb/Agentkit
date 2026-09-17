@@ -192,8 +192,8 @@ public sealed class OrderedAgentRunner(IAgentModelClient model)
                     {
                         try
                         {
-                            var output = await tool.ExecuteAsync(call.Arguments.Clone(), cancellationToken);
-                            result = new ToolResult(call.Id, call.Name, ToolOutcome.Succeeded, output.Clone());
+                            var output = await tool.ExecuteAsync(call.Arguments.DeepClone(), cancellationToken);
+                            result = new ToolResult(call.Id, call.Name, ToolOutcome.Succeeded, output.DeepClone());
                         }
                         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                         {

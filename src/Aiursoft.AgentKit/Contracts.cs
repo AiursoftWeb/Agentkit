@@ -1,5 +1,5 @@
-using System.Text.Json;
 using Aiursoft.AgentKit.Messages;
+using Newtonsoft.Json.Linq;
 
 namespace Aiursoft.AgentKit;
 
@@ -66,22 +66,23 @@ public sealed record ToolDefinition
 {
     public string Name { get; }
     public string Description { get; }
-    public JsonElement InputSchema { get; }
+    public JToken InputSchema { get; }
     public bool RequiresApproval { get; }
 
-    public ToolDefinition(string name, string description, JsonElement inputSchema, bool requiresApproval = false)
+    public ToolDefinition(string name, string description, JToken inputSchema, bool requiresApproval = false)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("Tool name is required.", nameof(name));
         if (string.IsNullOrWhiteSpace(description)) throw new ArgumentException("Tool description is required.", nameof(description));
 
         Name = name;
         Description = description;
-        InputSchema = inputSchema.Clone();
+        ArgumentNullException.ThrowIfNull(inputSchema);
+        InputSchema = inputSchema.DeepClone();
         RequiresApproval = requiresApproval;
     }
 
     public ToolDefinition(string name, string description, bool requiresApproval = false)
-        : this(name, description, JsonSerializer.SerializeToElement(new object()), requiresApproval)
+        : this(name, description, new JObject(), requiresApproval)
     {
     }
 }
@@ -97,7 +98,7 @@ public interface IAgentTool
 {
     ToolDefinition Definition { get; }
 
-    ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken);
+    ValueTask<JToken> ExecuteAsync(JToken arguments, CancellationToken cancellationToken);
 }
 
 public interface IAgentModelClient

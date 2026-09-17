@@ -35,10 +35,10 @@ public static class EvaluationDefinitionValidator
 
     private static void ValidateMatch(EvaluationAssertion assertion)
     {
-        if (assertion.Match.ValueKind == System.Text.Json.JsonValueKind.Undefined)
+        if (assertion.Match.Type == Newtonsoft.Json.Linq.JTokenType.Undefined)
             throw new ArgumentException($"Assertion '{assertion.Id}' has no match value.", nameof(assertion));
         if (assertion.Kind is EvaluationAssertionKinds.MaxToolCalls or EvaluationAssertionKinds.MaxIterations &&
-            (assertion.Match.ValueKind != System.Text.Json.JsonValueKind.Number || !assertion.Match.TryGetInt32(out var maximum) || maximum < 0))
+            (assertion.Match.Type != Newtonsoft.Json.Linq.JTokenType.Integer || assertion.Match.ToObject<long>() is var maximum && (maximum < 0 || maximum > int.MaxValue)))
             throw new ArgumentException($"Assertion '{assertion.Id}' requires a non-negative integer match value.", nameof(assertion));
     }
 }

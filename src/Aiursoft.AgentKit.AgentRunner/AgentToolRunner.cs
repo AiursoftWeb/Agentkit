@@ -79,8 +79,8 @@ internal sealed class AgentToolRunner
             {
                 if (tool is IAgentToolExecutionObserver observer)
                     observer.SetExecutionContext(new AgentToolExecutionContext(call.Id, call.Name, iteration));
-                var output = await tool.ExecuteAsync(call.Arguments.Clone(), cancellationToken);
-                results[index] = new ToolResult(call.Id, call.Name, ToolOutcome.Succeeded, output.Clone());
+                var output = await tool.ExecuteAsync(call.Arguments.DeepClone(), cancellationToken);
+                results[index] = new ToolResult(call.Id, call.Name, ToolOutcome.Succeeded, output.DeepClone());
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

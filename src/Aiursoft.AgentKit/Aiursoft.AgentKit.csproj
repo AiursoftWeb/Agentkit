@@ -4,5 +4,5 @@
     <Description>Provider-neutral contracts and bounded tool orchestration for agent applications.</Description><PackageTags>agents;tools;orchestration</PackageTags><IsPackable>true</IsPackable>
     <PackageReadmeFile>README.md</PackageReadmeFile><PackageLicenseFile>LICENSE</PackageLicenseFile><PackageLicenseExpression />
   </PropertyGroup>
-  <ItemGroup><None Include="README.md" Pack="true" PackagePath="README.md"/><None Include="LICENSE" Pack="true" PackagePath=""/></ItemGroup>
+  <ItemGroup><None Include="README.md" Pack="true" PackagePath="README.md"/><None Include="LICENSE" Pack="true" PackagePath=""/><PackageReference Include="Newtonsoft.Json" Version="13.0.4" /></ItemGroup>
 </Project>
