@@ -8,6 +8,7 @@ public sealed class CoreTests
 {
     private sealed class Tool : IAgentTool { public ToolDefinition Definition { get; } public int CallCount; private readonly bool fail; public Tool(string name, bool approval = false, bool fail = false) { Definition = new(name, name, approval); this.fail = fail; } public ValueTask<JsonElement> ExecuteAsync(JsonElement a, CancellationToken c) { CallCount++; if (fail) throw new InvalidOperationException("secret"); return ValueTask.FromResult(a.Clone()); } }
     private sealed class Model : IAgentModelClient { private readonly Queue<AgentModelResponse> responses; public List<AgentModelRequest> Requests = []; public Model(params AgentModelResponse[] r) { responses = new(r); } public ValueTask<AgentModelResponse> CompleteAsync(AgentModelRequest q, CancellationToken c) { Requests.Add(q); return ValueTask.FromResult(responses.Count > 0 ? responses.Dequeue() : new AgentModelResponse([new TextBlock("done")])); } }
+    private sealed class ContextTool(string name) : IAgentTool, IAgentToolExecutionObserver { public ToolDefinition Definition { get; } = new(name, name); public AgentToolExecutionContext? Context { get; private set; } public void SetExecutionContext(AgentToolExecutionContext context) => Context = context; public ValueTask<JsonElement> ExecuteAsync(JsonElement arguments, CancellationToken cancellationToken) { Assert.IsNotNull(Context); return ValueTask.FromResult(arguments.Clone()); } }
     static ToolCall Call(string id, string name = "echo") => new(id, name, JsonDocument.Parse("{\"x\":1}").RootElement);
     static AgentModelResponse Calls(params ToolCall[] calls) => new(calls.Select(x => (AgentContentBlock)new ToolCallBlock(x)), AgentFinishReason.ToolCalls);
     [TestMethod] public async Task PlainText() { var r = await new BoundedAgentRunner(new Model(new AgentModelResponse([new TextBlock("ok")]))).RunAsync(new AgentRunRequest([], [])); Assert.AreEqual(AgentRunOutcome.Completed, r.Outcome); }
@@ -140,14 +141,29 @@ public sealed class CoreTests
         Assert.AreEqual("I will search.", assistantContent.Text);
         Assert.IsTrue(assistantContent.HasToolCalls);
         Assert.AreEqual("echo", events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolCallProposed).ToolName);
+        Assert.AreEqual("search-1", events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolExecutionStarted).ToolCallId);
         Assert.AreEqual("echo", events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolExecutionStarted).ToolName);
         var completedTool = events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolExecutionCompleted);
+        Assert.AreEqual("search-1", completedTool.ToolCallId);
         Assert.AreEqual("echo", completedTool.ToolName);
         Assert.AreEqual(ToolOutcome.Succeeded, completedTool.ToolOutcome);
         Assert.AreEqual("quartz", events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.ToolCallProposed)
             .ToolCall!.Arguments.GetProperty("query").GetString());
         Assert.AreEqual(AgentRunOutcome.Completed, events.Single(agentEvent => agentEvent.Kind == AgentRunEventKind.RunCompleted).RunOutcome);
         Assert.AreEqual(AgentRunOutcome.Completed, result.Outcome);
+    }
+
+    [TestMethod]
+    public async Task ToolExecutionContextIsSuppliedBeforeExecution()
+    {
+        var tool = new ContextTool("echo");
+        var result = await new BoundedAgentRunner(new Model(Calls(Call("context-1")), new AgentModelResponse([new TextBlock("done")]))).RunAsync(new AgentRunRequest([], [tool]));
+
+        Assert.AreEqual(AgentRunOutcome.Completed, result.Outcome);
+        Assert.IsNotNull(tool.Context);
+        Assert.AreEqual("context-1", tool.Context.ToolCallId);
+        Assert.AreEqual("echo", tool.Context.ToolName);
+        Assert.AreEqual(1, tool.Context.Iteration);
     }
 
     [TestMethod]
