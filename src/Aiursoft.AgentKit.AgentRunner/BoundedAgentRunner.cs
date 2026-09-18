@@ -173,7 +173,7 @@ public sealed class BoundedAgentRunner : IAgentRunner
                     cancellationToken);
                 results.AddRange(batchResults.Select(result => result.DeepCopy()));
                 traces.AddRange(batchTraces);
-                transcript.Add(TranscriptMessage.Tool(batchResults));
+                transcript.Add(TranscriptMessage.Tool(batchResults, isMeta: true));
 
                 if (iterations == options.Iterations)
                 {
