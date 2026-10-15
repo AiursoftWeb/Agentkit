@@ -81,4 +81,8 @@ dotnet pack Aiursoft.AgentKit.sln --configuration Release --no-build
 
 There are many ways to contribute to the project: logging bugs, submitting merge requests, reporting issues, and suggesting improvements.
 
-Create a personal fork and use feature branches for your changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for validation requirements, and use the [issue tracker](https://gitlab.aiursoft.com/aiursoft/agentkit/-/issues) for bug reports and feature requests.
+Create a personal fork and use feature branches for your changes. Keep the core provider-neutral and dependency-light, and add deterministic MSTest coverage for behavior changes. Use the [issue tracker](https://gitlab.aiursoft.com/aiursoft/agentkit/-/issues) for bug reports and feature requests.
+
+Before submitting a change, run the focused tests that cover it and `./lint.sh`. For package changes, verify Release packaging as described above.
+
+Report suspected security vulnerabilities privately to the Aiursoft maintainers.
