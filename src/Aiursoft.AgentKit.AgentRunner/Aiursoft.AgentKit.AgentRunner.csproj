@@ -1,20 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Aiursoft.AgentKit.AgentRunner</RootNamespace>
+    <OutputType>Library</OutputType>
+    <Version>10.0.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Aiursoft.AgentKit.AgentRunner</AssemblyName>
-    <PackageId>Aiursoft.AgentKit.AgentRunner</PackageId>
-    <Description>Provider-neutral AgentKit runtime entry points and ordered approval execution.</Description>
-    <PackageTags>agents;runner;tools;orchestration</PackageTags>
+    <RootNamespace>Aiursoft.AgentKit.AgentRunner</RootNamespace>
+    <IsTestProject>false</IsTestProject>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Company>Aiursoft</Company>
+    <Product>AgentKit.AgentRunner</Product>
+    <Authors>Aiursoft</Authors>
+    <Description>Provider-neutral AgentKit runtime entry points and ordered approval execution.</Description>
+    <PackageId>Aiursoft.AgentKit.AgentRunner</PackageId>
+    <PackageTags>agents;runner;tools;orchestration</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit.git</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageLicenseExpression />
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aiursoft.AgentKit\Aiursoft.AgentKit.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="README.md" />
-    <None Include="LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="." />
+    <None Include="LICENSE" Pack="true" PackagePath="." />
   </ItemGroup>
 </Project>

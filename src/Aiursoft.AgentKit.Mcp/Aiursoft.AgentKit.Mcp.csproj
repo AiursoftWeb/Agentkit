@@ -1,14 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Aiursoft.AgentKit.Mcp</RootNamespace>
+    <OutputType>Library</OutputType>
+    <Version>10.0.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Aiursoft.AgentKit.Mcp</AssemblyName>
-    <PackageId>Aiursoft.AgentKit.Mcp</PackageId>
-    <Description>Official MCP SDK adapters for Aiursoft.AgentKit.</Description>
-    <PackageTags>agents;mcp;tools;orchestration</PackageTags>
+    <RootNamespace>Aiursoft.AgentKit.Mcp</RootNamespace>
+    <IsTestProject>false</IsTestProject>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <IsPackable>true</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Company>Aiursoft</Company>
+    <Product>AgentKit.Mcp</Product>
+    <Authors>Aiursoft</Authors>
+    <Description>Official MCP SDK adapters for Aiursoft.AgentKit.</Description>
+    <PackageId>Aiursoft.AgentKit.Mcp</PackageId>
+    <PackageTags>agents;mcp;tools;orchestration</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit.git</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageLicenseExpression />
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Aiursoft.AgentKit\Aiursoft.AgentKit.csproj" />
@@ -16,7 +28,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="README.md" />
-    <None Include="LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="." />
+    <None Include="LICENSE" Pack="true" PackagePath="." />
   </ItemGroup>
 </Project>

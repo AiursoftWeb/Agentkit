@@ -1,8 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>Aiursoft.AgentKit</RootNamespace><AssemblyName>Aiursoft.AgentKit</AssemblyName><PackageId>Aiursoft.AgentKit</PackageId>
-    <Description>Provider-neutral contracts and bounded tool orchestration for agent applications.</Description><PackageTags>agents;tools;orchestration</PackageTags><IsPackable>true</IsPackable>
-    <PackageReadmeFile>README.md</PackageReadmeFile><PackageLicenseFile>LICENSE</PackageLicenseFile><PackageLicenseExpression />
+    <OutputType>Library</OutputType>
+    <Version>10.0.0</Version>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Aiursoft.AgentKit</AssemblyName>
+    <RootNamespace>Aiursoft.AgentKit</RootNamespace>
+    <IsTestProject>false</IsTestProject>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Company>Aiursoft</Company>
+    <Product>AgentKit</Product>
+    <Authors>Aiursoft</Authors>
+    <Description>Provider-neutral contracts, messages, cloning, and transcript validation for agent applications.</Description>
+    <PackageId>Aiursoft.AgentKit</PackageId>
+    <PackageTags>agents;tools;orchestration</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit.git</RepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-  <ItemGroup><None Include="README.md" Pack="true" PackagePath="README.md"/><None Include="LICENSE" Pack="true" PackagePath=""/><PackageReference Include="Newtonsoft.Json" Version="13.0.4" /></ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="." />
+    <None Include="LICENSE" Pack="true" PackagePath="." />
+  </ItemGroup>
 </Project>

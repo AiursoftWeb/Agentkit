@@ -1,8 +1,14 @@
 # Aiursoft AgentKit
 
-Provider-neutral .NET contracts and bounded multi-tool orchestration for agent applications.
+Provider-neutral .NET contracts, messages, cloning, and transcript validation for agent applications.
 
-AgentKit contains no provider or MCP integration and uses only the .NET BCL and `System.Text.Json`.
+This package contains no model provider, runner implementation, or MCP integration. Its JSON contracts use `Newtonsoft.Json`. Install `Aiursoft.AgentKit.AgentRunner` for tool orchestration.
+
+## How to install
+
+```bash
+dotnet add package Aiursoft.AgentKit
+```
 
 ## Build and test
 
