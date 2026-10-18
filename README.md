@@ -1,6 +1,6 @@
 # Aiursoft AgentKit
 
-[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://gitlab.aiursoft.com/aiursoft/agentkit/-/blob/master/LICENSE)
+[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/AiursoftWeb/agentkit/blob/master/LICENSE)
 [![Pipeline stat](https://gitlab.aiursoft.com/aiursoft/agentkit/badges/master/pipeline.svg)](https://gitlab.aiursoft.com/aiursoft/agentkit/-/pipelines)
 [![Test Coverage](https://gitlab.aiursoft.com/aiursoft/agentkit/badges/master/coverage.svg)](https://gitlab.aiursoft.com/aiursoft/agentkit/-/pipelines)
 [![NuGet version (Aiursoft.AgentKit)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit/)
@@ -81,7 +81,7 @@ dotnet pack Aiursoft.AgentKit.sln --configuration Release --no-build
 
 There are many ways to contribute to the project: logging bugs, submitting merge requests, reporting issues, and suggesting improvements.
 
-Create a personal fork and use feature branches for your changes. Keep the core provider-neutral and dependency-light, and add deterministic MSTest coverage for behavior changes. Use the [issue tracker](https://gitlab.aiursoft.com/aiursoft/agentkit/-/issues) for bug reports and feature requests.
+Create a personal fork and use feature branches for your changes. Keep the core provider-neutral and dependency-light, and add deterministic MSTest coverage for behavior changes. Use the [issue tracker](https://github.com/AiursoftWeb/agentkit/issues) for bug reports and feature requests.
 
 Before submitting a change, run the focused tests that cover it and `./lint.sh`. For package changes, verify Release packaging as described above.
 
