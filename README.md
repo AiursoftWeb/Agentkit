@@ -7,7 +7,7 @@
 [![NuGet version (Aiursoft.AgentKit.AgentRunner)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.AgentRunner.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit.AgentRunner/)
 [![NuGet version (Aiursoft.AgentKit.Mcp)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.Mcp.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit.Mcp/)
 [![NuGet version (Aiursoft.AgentKit.Evaluator)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.Evaluator.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit.Evaluator/)
-[![Man hours](https://manhours.aiursoft.com/r/gitlab.aiursoft.com/aiursoft/agentkit.svg)](https://manhours.aiursoft.com/r/gitlab.aiursoft.com/aiursoft/agentkit.html)
+[![Man hours](https://manhours.aiursoft.com/r/github.com/aiursoftweb/agentkit.svg)](https://manhours.aiursoft.com/r/github.com/aiursoftweb/agentkit.html)
 
 Composable .NET building blocks for agent applications. AgentKit separates provider-neutral contracts, tool execution, MCP integration, and evaluation into four NuGet packages for .NET 10.
 
