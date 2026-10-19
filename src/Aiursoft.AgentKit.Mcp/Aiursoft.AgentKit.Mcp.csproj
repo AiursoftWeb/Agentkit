@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <Version>10.0.2</Version>
+    <Version>10.0.3</Version>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Aiursoft.AgentKit.Mcp</AssemblyName>
     <RootNamespace>Aiursoft.AgentKit.Mcp</RootNamespace>
@@ -17,9 +17,9 @@
     <PackageId>Aiursoft.AgentKit.Mcp</PackageId>
     <PackageTags>agents;mcp;tools;orchestration</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/AiursoftWeb/agentkit</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/AiursoftWeb/agentkit.git</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>

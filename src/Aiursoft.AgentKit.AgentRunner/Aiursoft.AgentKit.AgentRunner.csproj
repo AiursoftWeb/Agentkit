@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <Version>10.0.0</Version>
+    <Version>10.0.1</Version>
     <TargetFramework>net10.0</TargetFramework>
     <AssemblyName>Aiursoft.AgentKit.AgentRunner</AssemblyName>
     <RootNamespace>Aiursoft.AgentKit.AgentRunner</RootNamespace>
@@ -17,9 +17,9 @@
     <PackageId>Aiursoft.AgentKit.AgentRunner</PackageId>
     <PackageTags>agents;runner;tools;orchestration</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://gitlab.aiursoft.com/aiursoft/agentkit</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/AiursoftWeb/agentkit</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://gitlab.aiursoft.com/aiursoft/agentkit.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/AiursoftWeb/agentkit.git</RepositoryUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
