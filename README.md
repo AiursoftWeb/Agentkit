@@ -3,6 +3,7 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/AiursoftWeb/agentkit/blob/master/LICENSE)
 [![Pipeline stat](https://gitlab.aiursoft.com/aiursoft/agentkit/badges/master/pipeline.svg)](https://gitlab.aiursoft.com/aiursoft/agentkit/-/pipelines)
 [![Test Coverage](https://gitlab.aiursoft.com/aiursoft/agentkit/badges/master/coverage.svg)](https://gitlab.aiursoft.com/aiursoft/agentkit/-/pipelines)
+[![S360 compliance](https://s360.aiursoft.com/badge.svg?project=aiursoft%2Fagentkit)](https://s360.aiursoft.com/SupplyChain?tab=projects&project=aiursoft%2Fagentkit&scope=baseline&ecosystem=all)
 [![NuGet version (Aiursoft.AgentKit)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit/)
 [![NuGet version (Aiursoft.AgentKit.AgentRunner)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.AgentRunner.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit.AgentRunner/)
 [![NuGet version (Aiursoft.AgentKit.Mcp)](https://img.shields.io/nuget/vpre/Aiursoft.AgentKit.Mcp.svg)](https://www.nuget.org/packages/Aiursoft.AgentKit.Mcp/)
